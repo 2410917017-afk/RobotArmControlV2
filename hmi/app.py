@@ -76,13 +76,13 @@ class RobotHMI(QMainWindow):
         self.poll_timer = QTimer(self)
         self.poll_timer.timeout.connect(self._send_status)
         self.poll_timer.start(1000)
-
+        #eef2f5
     def _build_ui(self) -> None:
         self.setStyleSheet("""
-            QMainWindow, QWidget { background: #eef2f5; color: #17212b; }
-            QGroupBox { border: 1px solid #bdc8d2; border-radius: 8px; margin-top: 10px; padding: 10px; font-weight: 600; }
+            QMainWindow, QWidget { background: #00011a; color: #F5F5DC; }
+            QGroupBox {background: #0b0c2d; border: 1px solid #bdc8d2; border-radius: 8px; margin-top: 10px; padding: 10px; font-weight: 600; }
             QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; }
-            QPushButton { min-height: 30px; padding: 4px 10px; border-radius: 5px; background: #d7e2ea; }
+            QPushButton { min-height: 30px; padding: 4px 10px; border-radius: 5px; background: #ff3509; }
             QPushButton:hover { background: #c6d8e5; }
             QPushButton:disabled { color: #89949e; background: #e2e6e9; }
             QPushButton#stopButton { background: #b71c1c; color: white; font-weight: bold; }
@@ -234,12 +234,12 @@ class RobotHMI(QMainWindow):
         left = QVBoxLayout()
         left.addWidget(joint_group)
         left.addWidget(fk_group)
-        left.addWidget(gripper_group)
         left.addStretch(1)
         layout.addLayout(left, 0, 0)
         right = QVBoxLayout()
         right.addWidget(cart_group)
-        right.addStretch(1)
+        right.addWidget(gripper_group)
+        #right.addStretch(1)
         layout.addLayout(right, 0, 1)
 
         self.tabs.addTab(page, "Manual / IK-FK")
