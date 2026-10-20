@@ -4,6 +4,7 @@ Aplicación PyQt6 dividida en módulos:
 
 - `main.py` / `app.py`: interfaz manual, IK/FK, conexión, gripper y teach pendant.
 - `serial_worker.py`: conexión serie en un QThread, con JSON por líneas y cola de salida.
+- El ESP32 usa FastAccelStepper para generar pulsos desde los periféricos/temporizadores del ESP32; el HMI registra confirmaciones `ack` y conteos de pasos para ayudar a diagnosticar los movimientos.
 - `kinematics.py`: cinemática directa DH estándar e inversa numérica DLS para XYZ + yaw/pitch.
 - `digital_twin.py`: esquema isométrico ligero con QPainter y marcas para puntos teach.
 - `teach_store.py`: persistencia local de secuencias JSON.

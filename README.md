@@ -21,11 +21,11 @@ Al encender, el firmware toma la pose actual como cero lógico y no mueve el bra
 
 Algunas placas ESP32 se reinician cuando el HMI abre el puerto USB serie. Si sucede, el firmware volverá a tomar la pose del momento como cero lógico y las secuencias guardadas dejarán de representar coordenadas absolutas del robot.
 
-`STOP` solicita una desaceleración usando AccelStepper; no es una parada de emergencia certificada. Conserva los drivers habilitados después de mover para mantener torque. Instala los DRV8825 con alimentación y disipación adecuadas, y prueba inicialmente con corriente limitada y el brazo despejado.
+`STOP` solicita una desaceleración usando FastAccelStepper; no es una parada de emergencia certificada. Conserva los drivers habilitados después de mover para mantener torque. Instala los DRV8825 con alimentación y disipación adecuadas, y prueba inicialmente con corriente limitada y el brazo despejado.
 
 ## Compilar
 
-Abre esta carpeta con PlatformIO y compila el entorno `esp32dev`. Las dependencias declaradas son AccelStepper, ArduinoJson y ESP32Servo. Si usas Arduino IDE, crea un sketch con `setup()` y `loop()` a partir de `src/main.cpp`, instala esas bibliotecas y selecciona una placa ESP32 compatible.
+Abre esta carpeta con PlatformIO y compila el entorno `esp32dev`. El proyecto usa FastAccelStepper para generar pulsos con los periféricos del ESP32, además de ArduinoJson y ESP32Servo. Si usas Arduino IDE, crea un sketch con `setup()` y `loop()` a partir de `src/main.cpp`, instala esas bibliotecas y selecciona una placa ESP32 compatible.
 
 ## Protocolo JSON
 

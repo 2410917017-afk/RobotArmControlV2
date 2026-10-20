@@ -527,9 +527,18 @@ class RobotHMI(QMainWindow):
             self._refresh_twin()
 
         if event == "ready":
-            self._log("ESP32", "Firmware listo; posición indicada es estimada en lazo abierto")
+            self._log("ESP32", f"Firmware listo · motor={message.get('stepper_engine', 'no informado')} · posición estimada en lazo abierto")
+        elif event == "ack":
+            if message.get("cmd") != "STATUS":
+                self._log("ack", f"{message.get('cmd', '')} aceptado en cola · id={message.get('id', '')}")
         elif event in ("position", "complete", "status", "homed", "stopping", "tool"):
-            self._log(event, f"id={message.get('id', '')} · moving={message.get('moving', False)}")
+            step_counts = " ".join(
+                f"J{index + 1}:{axis.get('steps', '?')}"
+                for index, axis in enumerate(axes)
+                if isinstance(axes, list) and isinstance(axis, dict)
+            ) if isinstance(axes, list) else ""
+            suffix = f" · pasos {step_counts}" if step_counts else ""
+            self._log(event, f"id={message.get('id', '')} · moving={message.get('moving', False)}{suffix}")
 
         if event == "complete" and self.sequence_active and message.get("id") == self.sequence_move_id:
             self.sequence_move_id = None

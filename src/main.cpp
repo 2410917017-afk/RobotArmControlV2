@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include <AccelStepper.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
+#include <FastAccelStepper.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,9 +16,8 @@ constexpr uint8_t kTxQueueLength = 16;
 constexpr size_t kOutputCapacity = 768;
 constexpr uint16_t kDefaultFeed = 300;       // pasos/s del eje con mayor recorrido
 constexpr uint16_t kMaximumFeed = 800;       // pasos/s
-constexpr float kBaseAcceleration = 200.0f;  // pasos/s^2 del eje con mayor recorrido
-constexpr uint16_t kStepPulseWidthUs = 3;    // DRV8825 requiere al menos 1.9 us
-constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(1) > 0 ? pdMS_TO_TICKS(1) : 1;
+constexpr uint32_t kBaseAcceleration = 200;  // pasos/s^2 del eje con mayor recorrido
+constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
 constexpr uint32_t kPositionReportPeriodMs = 200;
 
 // Pinout propuesto y confirmado por el usuario para su ESP32 estándar.
@@ -76,19 +75,15 @@ struct OutgoingLine {
   char data[kOutputCapacity];
 };
 
-AccelStepper steppers[kAxisCount] = {
-    AccelStepper(AccelStepper::DRIVER, kStepPins[0], kDirectionPins[0]),
-    AccelStepper(AccelStepper::DRIVER, kStepPins[1], kDirectionPins[1]),
-    AccelStepper(AccelStepper::DRIVER, kStepPins[2], kDirectionPins[2]),
-    AccelStepper(AccelStepper::DRIVER, kStepPins[3], kDirectionPins[3]),
-    AccelStepper(AccelStepper::DRIVER, kStepPins[4], kDirectionPins[4]),
-};
+FastAccelStepperEngine stepperEngine;
+FastAccelStepper* steppers[kAxisCount] = {};
 
 QueueHandle_t commandQueue = nullptr;
 QueueHandle_t txQueue = nullptr;
 bool toolOpenState = false;
 bool positionReferenced = true;  // origen lógico fijado en la pose al encender
 uint32_t activeCommandId = 0;
+uint32_t activeMoveCommandId = 0;
 Servo gripperServo;
 
 float stepsPerJointDegree(uint8_t axis) {
@@ -109,7 +104,7 @@ float stepsToJointDegrees(uint8_t axis, long steps) {
 
 bool anyAxisMoving() {
   for (uint8_t i = 0; i < kAxisCount; ++i) {
-    if (steppers[i].isRunning()) return true;
+    if (steppers[i] != nullptr && steppers[i]->isRunning()) return true;
   }
   return false;
 }
@@ -154,8 +149,8 @@ void sendPosition(const char* eventName, uint32_t eventId) {
   JsonArray axes = response.createNestedArray("axes");
   for (uint8_t i = 0; i < kAxisCount; ++i) {
     JsonObject axis = axes.createNestedObject();
-    const long steps = steppers[i].currentPosition();
-    const long target = steppers[i].targetPosition();
+    const int32_t steps = steppers[i]->getCurrentPosition();
+    const int32_t target = steppers[i]->targetPos();
     axis["joint"] = i + 1;
     axis["steps"] = steps;
     axis["joint_deg_est"] = stepsToJointDegrees(i, steps);
@@ -339,24 +334,40 @@ void txTask(void*) {
 }
 
 void applyMove(const MotionCommand& command) {
-  long largestDistance = 0;
-  long distances[kAxisCount];
+  int32_t largestDistance = 0;
+  int32_t targets[kAxisCount];
+  int32_t distances[kAxisCount];
   for (uint8_t i = 0; i < kAxisCount; ++i) {
-    distances[i] = labs(command.targetSteps[i] - steppers[i].currentPosition());
+    targets[i] = static_cast<int32_t>(command.targetSteps[i]);
+    distances[i] = abs(targets[i] - steppers[i]->getCurrentPosition());
     if (distances[i] > largestDistance) largestDistance = distances[i];
   }
 
   setDriversEnabled(true);
   activeCommandId = command.id;
+  activeMoveCommandId = command.id;
   for (uint8_t i = 0; i < kAxisCount; ++i) {
     const float fraction = largestDistance == 0
                                ? 1.0f
                                : static_cast<float>(distances[i]) / largestDistance;
-    const float axisSpeed = max(1.0f, command.feed * fraction);
-    const float axisAcceleration = max(1.0f, kBaseAcceleration * fraction);
-    steppers[i].setMaxSpeed(axisSpeed);
-    steppers[i].setAcceleration(axisAcceleration);
-    steppers[i].moveTo(command.targetSteps[i]);
+    uint32_t axisSpeed = static_cast<uint32_t>(command.feed * fraction);
+    int32_t axisAcceleration = static_cast<int32_t>(kBaseAcceleration * fraction);
+    if (axisSpeed < 1) axisSpeed = 1;
+    if (axisAcceleration < 1) axisAcceleration = 1;
+    if (steppers[i]->setSpeedInHz(axisSpeed) != 0 ||
+        steppers[i]->setAcceleration(axisAcceleration) != 0) {
+      sendError("MOVE", "stepper_speed_or_acceleration_rejected", command.id);
+      return;
+    }
+  }
+  for (uint8_t i = 0; i < kAxisCount; ++i) {
+    if (steppers[i]->moveTo(targets[i]) != MOVE_OK) {
+      for (uint8_t stopIndex = 0; stopIndex < kAxisCount; ++stopIndex) {
+        steppers[stopIndex]->stopMove();
+      }
+      sendError("MOVE", "stepper_rejected_target", command.id);
+      return;
+    }
   }
   sendPosition(largestDistance == 0 ? "complete" : "position");
 }
@@ -378,7 +389,8 @@ void motionTask(void*) {
 
         case CMD_STOP:
           activeCommandId = command.id;
-          for (uint8_t i = 0; i < kAxisCount; ++i) steppers[i].stop();
+          activeMoveCommandId = command.id;
+          for (uint8_t i = 0; i < kAxisCount; ++i) steppers[i]->stopMove();
           sendPosition("stopping");
           break;
 
@@ -387,7 +399,7 @@ void motionTask(void*) {
           if (anyAxisMoving()) {
             sendError("HOME", "stop_before_software_home", command.id);
           } else {
-            for (uint8_t i = 0; i < kAxisCount; ++i) steppers[i].setCurrentPosition(0);
+            for (uint8_t i = 0; i < kAxisCount; ++i) steppers[i]->setCurrentPosition(0);
             positionReferenced = true;
             sendPosition("homed");
           }
@@ -406,15 +418,13 @@ void motionTask(void*) {
       }
     }
 
-    for (uint8_t i = 0; i < kAxisCount; ++i) steppers[i].run();
-
     const bool moving = anyAxisMoving();
     const uint32_t now = millis();
     if (moving && now - lastPositionReport >= kPositionReportPeriodMs) {
       sendPosition("position");
       lastPositionReport = now;
     } else if (wasMoving && !moving) {
-      sendPosition("complete");
+      sendPosition("complete", activeMoveCommandId);
     }
     wasMoving = moving;
 
@@ -427,16 +437,27 @@ void motionTask(void*) {
 void setup() {
   Serial.begin(kBaudRate);
 
+  stepperEngine.init();
   for (uint8_t i = 0; i < kAxisCount; ++i) {
+    steppers[i] = stepperEngine.stepperConnectToPin(kStepPins[i]);
+    if (steppers[i] == nullptr) {
+      Serial.printf("{\"event\":\"error\",\"code\":\"stepper_engine_connection_failed\",\"axis\":%u}\n",
+                    static_cast<unsigned>(i + 1));
+      for (;;) delay(1000);
+    }
+    steppers[i]->setDirectionPin(kDirectionPins[i]);
+    if (steppers[i]->setSpeedInHz(kDefaultFeed) != 0 ||
+        steppers[i]->setAcceleration(kBaseAcceleration) != 0) {
+      Serial.printf("{\"event\":\"error\",\"code\":\"stepper_engine_configuration_failed\",\"axis\":%u}\n",
+                    static_cast<unsigned>(i + 1));
+      for (;;) delay(1000);
+    }
+    steppers[i]->setCurrentPosition(0);
     if (kEnablePins[i] >= 0) {
       const uint8_t disabledLevel = kEnableActiveLow ? HIGH : LOW;
-      digitalWrite(kEnablePins[i], disabledLevel);
       pinMode(kEnablePins[i], OUTPUT);
+      digitalWrite(kEnablePins[i], disabledLevel);
     }
-    steppers[i].setMinPulseWidth(kStepPulseWidthUs);
-    steppers[i].setMaxSpeed(kDefaultFeed);
-    steppers[i].setAcceleration(kBaseAcceleration);
-    steppers[i].setCurrentPosition(0);  // pose al encender = cero lógico
   }
   setDriversEnabled(kEnableDriversAtBoot);
 
@@ -454,6 +475,7 @@ void setup() {
   StaticJsonDocument<256> ready;
   ready["event"] = "ready";
   ready["axes"] = kAxisCount;
+  ready["stepper_engine"] = "FastAccelStepper";
   ready["homed"] = true;
   ready["reference"] = "power_on_pose";
   ready["position_source"] = "commanded_open_loop_estimate";
