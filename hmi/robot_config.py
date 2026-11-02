@@ -16,22 +16,22 @@ class DHLink:
 
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5")
-JOINT_LIMITS_DEG = ((-30.0, 30.0),) * 5
+JOINT_LIMITS_DEG = ((-160, 160),) * 5
 
 # Las primeras cuatro filas provienen del código compartido. La quinta usa los
 # datos añadidos por el usuario para la junta faltante: a/r=0, d=0, alpha=-90°.
 # En DH estándar, theta es la variable articular y a corresponde a r.
 DH_LINKS = (
-    DHLink(a_mm=0.0, d_mm=145.0, alpha_deg=-90.0),
+    DHLink(a_mm=25.0, d_mm=145.0, alpha_deg=90.0),
     DHLink(a_mm=200.0, d_mm=0.0, alpha_deg=0.0),
-    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=-90.0),
-    DHLink(a_mm=0.0, d_mm=177.0, alpha_deg=90.0),
-    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=-90.0),
+    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
+    DHLink(a_mm=0.0, d_mm=177.0, alpha_deg=-90.0),
+    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
 )
 
 # Offset mecánico entre el cero lógico de arranque del ESP32 y DH theta=0.
 # Ajustar cuando se conozca la pose física usada al encender.
-KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 0.0, 0.0, 0.0, 0.0)
+KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 90.0, 0.0, 0.0, 0.0)
 TCP_OFFSET_MM = (0.0, 0.0, 0.0)
 
 DEFAULT_FEED_STEPS_S = 200
