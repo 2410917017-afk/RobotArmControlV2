@@ -14,24 +14,23 @@ constexpr size_t kLineCapacity = 512;
 constexpr uint8_t kQueueLength = 8;
 constexpr uint8_t kTxQueueLength = 16;
 constexpr size_t kOutputCapacity = 768;
-constexpr uint16_t kDefaultFeed = 300;       // pasos/s del eje con mayor recorrido
+constexpr uint16_t kDefaultFeed = 200;       // pasos/s del eje con mayor recorrido
 constexpr uint16_t kMaximumFeed = 800;       // pasos/s
 constexpr uint32_t kBaseAcceleration = 200;  // pasos/s^2 del eje con mayor recorrido
 constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
 constexpr uint32_t kPositionReportPeriodMs = 200;
 
 // Pinout propuesto y confirmado por el usuario para su ESP32 estándar.
-// STEP y DIR están separados por eje; confirmar etiquetas físicas de la placa.
-constexpr uint8_t kStepPins[kAxisCount] = {25, 26, 27, 32, 33};
-constexpr uint8_t kDirectionPins[kAxisCount] = {16, 17, 18, 19, 21};
+// STEP y DIR están separados por eje.
+constexpr uint8_t kStepPins[kAxisCount] = {12, 23, 21, 17, 14}; // Cambiar 12 y 14
+constexpr uint8_t kDirectionPins[kAxisCount] = {13, 22, 19, 4, 27};
 // Se puede compartir ENABLE conectando los EN de los cinco DRV8825 juntos.
-constexpr int8_t kEnablePins[kAxisCount] = {23, 23, 23, 23, 23};
+constexpr int8_t kEnablePins[kAxisCount] = {33, 33, 33, 33, 33};
 constexpr bool kEnableActiveLow = true;
 constexpr bool kEnableDriversAtBoot = true;
 
 // Pin y recorrido confirmados: cerrado=0°, abierto=55°.
-// Cambiar kToolPin solo si posteriormente se modifica el cableado.
-constexpr int8_t kToolPin = 22;
+constexpr int8_t kToolPin = 26;
 constexpr uint8_t kToolOpenAngle = 55;
 constexpr uint8_t kToolClosedAngle = 0;
 
@@ -45,14 +44,12 @@ struct AxisCalibration {
 };
 
 // Reducciones de la tabla para las primeras cinco articulaciones.
-// Los límites +/-10 grados son deliberadamente estrechos para las primeras
-// pruebas; ajústelos tras verificar el montaje y el sentido de cada eje.
 AxisCalibration kAxis[kAxisCount] = {
-    {200, 1, 3.5f, 1, -10.0f, 10.0f},
-    {200, 1, 83.3f, 1, -10.0f, 10.0f},
-    {200, 1, 43.3f, 1, -10.0f, 10.0f},
-    {200, 1, 4.75f, 1, -10.0f, 10.0f},
-    {200, 1, 3.0f, 1, -10.0f, 10.0f},
+    {200, 1, 3.5f, 1, -30.0f, 30.0f},
+    {200, 1, 83.3f, 1, -30.0f, 30.0f},
+    {200, 1, 43.3f, 1, -30.0f, 30.0f},
+    {200, 1, 4.75f, 1, -30.0f, 30.0f},
+    {200, 1, 3.0f, 1, -30.0f, 30.0f},
 };
 
 enum CommandType : uint8_t {

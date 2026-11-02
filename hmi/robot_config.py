@@ -16,7 +16,7 @@ class DHLink:
 
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5")
-JOINT_LIMITS_DEG = ((-10.0, 10.0),) * 5
+JOINT_LIMITS_DEG = ((-30.0, 30.0),) * 5
 
 # Las primeras cuatro filas provienen del código compartido. La quinta usa los
 # datos añadidos por el usuario para la junta faltante: a/r=0, d=0, alpha=-90°.
@@ -34,7 +34,7 @@ DH_LINKS = (
 KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 0.0, 0.0, 0.0, 0.0)
 TCP_OFFSET_MM = (0.0, 0.0, 0.0)
 
-DEFAULT_FEED_STEPS_S = 300
+DEFAULT_FEED_STEPS_S = 200
 MAX_FEED_STEPS_S = 800
 DEFAULT_JOINT_JOG_DEG = 1.0
 DEFAULT_CARTESIAN_JOG_MM = 5.0
