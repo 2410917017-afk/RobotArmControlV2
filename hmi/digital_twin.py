@@ -27,7 +27,7 @@ class DigitalTwin(QWidget):
     def _project(point: tuple[float, float, float], center_x: float, center_y: float, scale: float) -> tuple[float, float]:
         x, y, z = point
         iso_x = (x - y) * 0.7071
-        iso_y = (x + y) * 0.32 - z
+        iso_y = (x + y) * 0.32 + z
         return center_x + iso_x * scale, center_y - iso_y * scale
 
     def paintEvent(self, _event) -> None:  # noqa: N802 - Qt event naming
