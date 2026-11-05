@@ -1,4 +1,11 @@
-// Hola
+/*
+{"cmd":"STATUS","id":1}
+{"cmd":"MOVE","id":2,"axes":[1,0,0,0,0],"feed":100}
+{"cmd":"STOP","id":3}
+{"cmd":"HOME","id":4}
+{"cmd":"TOOL","id":5,"tool":true}
+{"cmd":"TOOL","id":6,"tool":false}
+*/
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
@@ -21,16 +28,14 @@ constexpr uint32_t kBaseAcceleration = 200;  // pasos/s^2 del eje con mayor reco
 constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
 constexpr uint32_t kPositionReportPeriodMs = 200;
 
-// Pinout propuesto y confirmado por el usuario para su ESP32 estándar.
 // STEP y DIR están separados por eje.
 constexpr uint8_t kStepPins[kAxisCount] = {12, 23, 21, 17, 14}; // Cambiar 12 y 14
 constexpr uint8_t kDirectionPins[kAxisCount] = {13, 22, 19, 4, 27};
-// Se puede compartir ENABLE conectando los EN de los cinco DRV8825 juntos.
 constexpr int8_t kEnablePins[kAxisCount] = {33, 33, 33, 33, 33};
 constexpr bool kEnableActiveLow = true;
 constexpr bool kEnableDriversAtBoot = true;
 
-// Pin y recorrido confirmados: cerrado=0°, abierto=55°.
+// Pin y recorrido: cerrado=0°, abierto=55°.
 constexpr int8_t kToolPin = 26;
 constexpr uint8_t kToolOpenAngle = 55;
 constexpr uint8_t kToolClosedAngle = 0;
@@ -46,11 +51,11 @@ struct AxisCalibration {
 
 // Reducciones de la tabla para las primeras cinco articulaciones.
 AxisCalibration kAxis[kAxisCount] = {
-    {200, 1, 3.5f, 1, -30.0f, 30.0f},
-    {200, 1, 83.3f, 1, -30.0f, 30.0f},
-    {200, 1, 43.3f, 1, -30.0f, 30.0f},
-    {200, 1, 4.75f, 1, -30.0f, 30.0f},
-    {200, 1, 3.0f, 1, -30.0f, 30.0f},
+    {200, 1, 3.5f, 1, -160.0f, 160.0f},
+    {200, 1, 83.3f, 1, 0.0f, 210.0f},
+    {200, 1, 86.6f, 1, 0.0f, 160.0f},
+    {200, 1, 4.75f, 1, -166.0f, 166.0f},
+    {200, 1, 3.0f, 1, -180.0f, 180.0f},
 };
 
 enum CommandType : uint8_t {

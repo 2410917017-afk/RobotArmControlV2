@@ -92,7 +92,7 @@ class RobotHMI(QMainWindow):
         """)
 
         root = QWidget()
-        root_layout = QVBoxLayout(root)
+        root_layout = QGridLayout(root)
         self.setCentralWidget(root)
 
         toolbar = QHBoxLayout()
@@ -119,10 +119,10 @@ class RobotHMI(QMainWindow):
         toolbar.addStretch(1)
         toolbar.addWidget(self.home_button)
         toolbar.addWidget(self.stop_button)
-        root_layout.addLayout(toolbar)
+        root_layout.addLayout(toolbar, 0, 0)
 
         self.tabs = QTabWidget()
-        root_layout.addWidget(self.tabs, 1)
+        root_layout.addWidget(self.tabs, 1, 0)
         self._build_manual_tab()
         self._build_teach_tab()
         self._build_twin_tab()
@@ -130,9 +130,10 @@ class RobotHMI(QMainWindow):
         self.log = QTableWidget(0, 2)
         self.log.setHorizontalHeaderLabels(["Hora", "Evento / diagnóstico"])
         self.log.horizontalHeader().setStretchLastSection(True)
-        self.log.setMaximumHeight(105)
+        self.log.setStyleSheet("""color:black; background:white""")
+        #self.log.setMaximumHeight(105)
         self.log.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        root_layout.addWidget(self.log)
+        root_layout.addWidget(self.log, 0, 1, 2, 1)
         self.statusBar().showMessage("HOME del ESP32 es una referencia de software en la pose actual.")
 
     def _build_manual_tab(self) -> None:
@@ -171,7 +172,8 @@ class RobotHMI(QMainWindow):
             plus = QPushButton("+")
             minus.clicked.connect(lambda _checked=False, i=index: self._jog_joint(i, -1))
             plus.clicked.connect(lambda _checked=False, i=index: self._jog_joint(i, 1))
-            joint_layout.addWidget(QLabel(name), row, 0)
+            nombre = QLabel(name)
+            joint_layout.addWidget(nombre, row, 0)
             joint_layout.addWidget(value, row, 1)
             joint_layout.addWidget(minus, row, 2)
             joint_layout.addWidget(plus, row, 3)
@@ -239,7 +241,7 @@ class RobotHMI(QMainWindow):
         right = QVBoxLayout()
         right.addWidget(cart_group)
         right.addWidget(gripper_group)
-        #right.addStretch(1)
+        right.addStretch(1)
         layout.addLayout(right, 0, 1)
 
         self.tabs.addTab(page, "Manual / IK-FK")

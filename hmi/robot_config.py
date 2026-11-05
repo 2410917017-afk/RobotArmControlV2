@@ -31,11 +31,11 @@ DH_LINKS = (
 
 # Offset mecánico entre el cero lógico de arranque del ESP32 y DH theta=0.
 # Ajustar cuando se conozca la pose física usada al encender.
-KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 90.0, 0.0, 0.0, 0.0)
+KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 195.0, -80.0, 0.0, 0.0)
 TCP_OFFSET_MM = (0.0, 0.0, 0.0)
 
 DEFAULT_FEED_STEPS_S = 200
-MAX_FEED_STEPS_S = 800
+MAX_FEED_STEPS_S = 1000
 DEFAULT_JOINT_JOG_DEG = 1.0
 DEFAULT_CARTESIAN_JOG_MM = 5.0
 DEFAULT_ANGULAR_JOG_DEG = 2.0
