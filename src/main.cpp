@@ -49,7 +49,7 @@ struct AxisCalibration {
   float maximumJointDegrees;
 };
 
-// Reducciones de la tabla para las primeras cinco articulaciones.
+// Reducciones de la tabla para las cinco articulaciones.
 AxisCalibration kAxis[kAxisCount] = {
     {200, 1, 3.5f, 1, -160.0f, 160.0f},
     {200, 1, 83.3f, 1, 0.0f, 210.0f},

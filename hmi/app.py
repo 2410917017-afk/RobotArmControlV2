@@ -128,6 +128,8 @@ class RobotHMI(QMainWindow):
         self._build_twin_tab()
 
         self.log = QTableWidget(0, 2)
+        self.log.setColumnWidth(0, 50)
+        self.log.setMaximumWidth(300)
         self.log.setHorizontalHeaderLabels(["Hora", "Evento / diagnóstico"])
         self.log.horizontalHeader().setStretchLastSection(True)
         self.log.setStyleSheet("""color:black; background:white""")
