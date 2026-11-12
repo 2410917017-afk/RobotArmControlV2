@@ -31,6 +31,5 @@ Conecta el ESP32 por USB, selecciona su puerto y pulsa **Conectar**. El HMI cons
 - `HOME` reasigna cero de software en la pose detenida actual. No hay búsqueda física porque no hay sensores de referencia.
 - El gemelo y las coordenadas XYZ son estimaciones abiertas derivadas de los ángulos comunicados por el ESP32. Las cuatro primeras filas DH vienen del código compartido y el usuario confirmó que están en milímetros y usan DH estándar. El TCP es cero por ahora; faltan el TCP real, offsets mecánicos y límites de recorrido para calibrar IK/FK.
 - Las secuencias teach guardan cinco ángulos y estado abierto/cerrado del gripper. Repetirlas tras reiniciar requiere volver a alinear físicamente la pose de arranque, ya que el ESP32 vuelve a definirla como cero.
-- El servo está configurado en el firmware con señal GPIO22, cerrado=0° y abierto=55°, según los datos confirmados.
+- El servo está configurado en el firmware con señal GPIO13, cerrado=0° y abierto=55°, según los datos confirmados.
 
-El pinout propuesto está aplicado en el firmware. El TCP sigue en (0,0,0), los offsets son cero y los límites son +/-10° para ensayos iniciales. Comprueba el sentido de giro de cada motor con movimientos pequeños y corrige `directionSign` y el cero mecánico antes de ampliar los límites.

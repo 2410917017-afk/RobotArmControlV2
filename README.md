@@ -1,18 +1,51 @@
 # Control del brazo de 5 GDL con ESP32
 
-Firmware Arduino/PlatformIO para cinco motores paso a paso con DRV8825. La interfaz envía y recibe una línea JSON terminada en `\n` por el puerto serie a 115200 baudios.
+Firmware Arduino/PlatformIO para cinco motores paso a paso con TB6600. La interfaz envía y recibe una línea JSON terminada en `\n` por el puerto serie a 115200 baudios.
 
 ## Configuración inicial
 
-- El proyecto apunta a `esp32dev` (ESP32-WROOM DevKit clásico), con el pinout propuesto confirmado por el usuario. STEP: GPIO 25, 26, 27, 32 y 33; DIR: GPIO 16, 17, 18, 19 y 21; ENABLE compartido: GPIO 23.
-- Si el cableado cambia o cada DRV8825 usa ENABLE separado, ajusta `kStepPins`, `kDirectionPins` y `kEnablePins` en `src/main.cpp`.
-- Configuración de microstepping: paso completo, M0/M1/M2 en LOW en cada DRV8825. El firmware usa 200 pasos/vuelta de motor en todos los ejes; el tamaño NEMA no cambia ese cálculo.
-- Reducciones motor:eje de salida para los cinco ejes: 3.5, 83.3, 43.3, 4.75 y 3. Los ángulos de `axes` son ángulos de articulación/eje de salida; los pasos calculados del motor incorporan la reducción.
+### Parametros DH
+|i|θ|d|a|α|
+|:-:|:-----:|:-:|:-:|:----:|
+|1|0|145|25|90|
+|2|90|0|200|0|
+|3|0|0|0|90|
+|4|0|177|0|-90|
+|5|0|0|0|90|
+
+### Relaciones de transmición mecánica
+|Junta|Planetario|Polea|Combinados|Pasos por grado|
+|:--:|:--:|:--:|:--:|:--:|
+|J1||1:3.5|1:3.5|1.94|
+|J2|1:50|30:50|1:83.3|46.28|
+|J3|1:50|30:52|1:86.6|48.1|
+|J4||20:95|1:4.75|2.64|
+|J5||20:60|1:3|1.67|
+
+### Límites articulares 
+Offset articular (Home):
+|||
+|--|--|
+|J1|0|
+|J2|195.0|
+|J3|-80|
+|J4|0|
+|J5|0|
+
+|J1|J2|J3|J4|J5|
+|:--:|:--:|:--:|:--:|:--:|
+|-160 a 160|0 a 210|0 a 160|-166 a 166|-180 a 180|
+
+
+- El proyecto apunta a `esp32dev` (ESP32-WROOM DevKit clásico), con el pinout propuesto confirmado por el usuario. STEP: GPIO 26, 17, 21, 23, 33; DIR: GPIO 25, 4, 19, 22, 32; ENABLE compartido: GPIO 27.
+- Si el cableado cambia o cada TB6600 usa ENABLE separado, ajusta `kStepPins`, `kDirectionPins` y `kEnablePins` en `src/main.cpp`.
+- Configuración de microstepping: paso completo, M0/M1/M2 en LOW en cada TB6600. El firmware usa 200 pasos/vuelta de motor en todos los ejes; el tamaño NEMA no cambia ese cálculo.
+- Reducciones motor:eje de salida para los cinco ejes: 3.5, 83.3, 86.6, 4.75 y 3. Los ángulos de `axes` son ángulos de articulación/eje de salida; los pasos calculados del motor incorporan la reducción.
 - Con paso completo, el incremento angular por paso queda aproximadamente en 0.514°, 0.0216°, 0.0416°, 0.379° y 0.600° por eje, respectivamente. Las estimaciones reportadas se cuantizan a esos pasos.
 - Los cinco sentidos comienzan en `+1`. Cambia `directionSign` a `-1` en el eje correspondiente si el sentido físico no coincide.
 - Los límites iniciales son +/-10 grados respecto al origen lógico de encendido. Son una protección temporal para ensayos pequeños y deben ajustarse por eje tras revisar el rango mecánico real.
 - ENABLE se activa al arrancar para mantener la pose y sigue activo para sostener torque. Ajusta el límite de corriente de cada DRV8825 al motor y a la refrigeración antes de energizarlos.
-- El servo usa `kToolPin = 22`, cerrado=0° y abierto=55°, valores confirmados por el usuario. Cambia el GPIO si modificas el cableado.
+- El servo usa `kToolPin = 13`, cerrado=0° y abierto=55°, valores confirmados por el usuario. Cambia el GPIO si modificas el cableado.
 - Alimenta el servo con una fuente adecuada para su corriente y une la tierra de esa fuente con GND del ESP32. No alimentes un servo de carga desde el pin 3V3 del ESP32.
 
 ## Referencia y limitaciones

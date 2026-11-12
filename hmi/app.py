@@ -256,6 +256,7 @@ class RobotHMI(QMainWindow):
         layout.addWidget(hint)
 
         self.points_table = QTableWidget(0, 12)
+        self.points_table.setStyleSheet("""color:black; background:white""")
         self.points_table.setHorizontalHeaderLabels(
             ["Punto", "J1°", "J2°", "J3°", "J4°", "J5°", "X mm", "Y mm", "Z mm", "Yaw°", "Pitch°", "Gripper"]
         )

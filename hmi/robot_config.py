@@ -16,10 +16,9 @@ class DHLink:
 
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5")
-JOINT_LIMITS_DEG = ((-160, 160),) * 5
+JOINT_LIMITS_DEG = ((-160, 160),(0,-210),(0,160),(-166,166),(-180,180))
 
-# Las primeras cuatro filas provienen del código compartido. La quinta usa los
-# datos añadidos por el usuario para la junta faltante: a/r=0, d=0, alpha=-90°.
+
 # En DH estándar, theta es la variable articular y a corresponde a r.
 DH_LINKS = (
     DHLink(a_mm=25.0, d_mm=145.0, alpha_deg=90.0),
