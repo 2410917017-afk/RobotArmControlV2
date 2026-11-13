@@ -54,7 +54,7 @@ Al encender, el firmware toma la pose actual como cero lógico y no mueve el bra
 
 Algunas placas ESP32 se reinician cuando el HMI abre el puerto USB serie. Si sucede, el firmware volverá a tomar la pose del momento como cero lógico y las secuencias guardadas dejarán de representar coordenadas absolutas del robot.
 
-`STOP` solicita una desaceleración usando FastAccelStepper; no es una parada de emergencia certificada. Conserva los drivers habilitados después de mover para mantener torque. Instala los DRV8825 con alimentación y disipación adecuadas, y prueba inicialmente con corriente limitada y el brazo despejado.
+`STOP` solicita una desaceleración usando FastAccelStepper; no es una parada de emergencia certificada. Conserva los drivers habilitados después de mover para mantener torque. Instala los TB6600 con alimentación y disipación adecuadas, y prueba inicialmente con corriente limitada y el brazo despejado.
 
 ## Compilar
 
@@ -79,3 +79,62 @@ Cada objeto ocupa una línea. `id` es opcional y se devuelve para correlacionar 
 - `TOOL`: mueve el servo a los ángulos configurados para abierto/cerrado.
 
 Respuestas: `ack`, `error`, `ready`, `status`, `position`, `complete`, `stopping`, `homed` o `tool`. Los objetos de posición contienen por eje el conteo de pasos, ángulo articular estimado y equivalente de giro del motor.
+
+
+## Protocolo de pruebas
+### 1. Preparación y seguridad
+- Deja el brazo despejado y, si es posible, apoya o descarga las articulaciones que puedan caer por gravedad. Ten a la mano una forma de cortar la alimentación de potencia de los motores. El botón STOP del programa desacelera los motores; no es un paro de emergencia.
+- Revisa el manual y la tabla DIP de tus módulos TB6600: configura corriente según la corriente nominal del motor y el microstepping que elegiste. No te guíes solo por el nombre TB6600: el integrado admite varias resoluciones, pero el módulo determina cómo se seleccionan. Ficha técnica de Toshiba
+- Antes de cambiar DIP, cablear o desconectar un motor, apaga la fuente. No conectes ni desconectes los cables del motor con el driver energizado.
+- Comprueba el cableado STEP/DIR/ENABLE y la referencia eléctrica según el manual del módulo. Verifica que sus entradas acepten correctamente la señal de 3.3 V del ESP32; si no, usa una interfaz de nivel adecuada. No asumas que todos los módulos con la etiqueta TB6600 tienen la misma entrada.
+- Confirma en el firmware que microsteps coincide con el ajuste DIP de cada driver. Si no coincide, el movimiento angular calculado no corresponderá al movimiento real.
+### 2. Pruebas iniciales de movimiento
+1. Con potencia de motores apagada, conecta USB, abre el monitor serial a 115200 baudios y envía:
+   {"cmd":"STATUS","id":1}
+   Confirma que llega la respuesta ready/`status` con cinco ejes.
+2. Con el brazo despejado y la potencia activada, prueba un solo eje a la vez, empezando con un cambio de 1° y velocidad baja:
+   {"cmd":"MOVE","id":2,"axes":[1,0,0,0,0],"feed":50}
+   Después vuelve J1 a cero:
+   {"cmd":"MOVE","id":3,"axes":[0,0,0,0,0],"feed":50}
+   Repite cambiando a 1 únicamente la segunda, tercera, cuarta y quinta posición del arreglo para probar J2–J5. Si un eje se mueve al sentido opuesto al esperado, detén la prueba y revisa el sentido configurado antes de seguir.
+3. Compara el ángulo ordenado con el giro observado. Si no coincide, revisa, en este orden: microstepping DIP frente a microsteps del firmware, relación de transmisión, sentido y cableado de fases. No intentes corregirlo ampliando límites.
+4. Cuando cada eje responda individualmente, prueba recorridos algo mayores, todavía uno por uno. Observa si el motor pierde pasos, vibra, se calienta demasiado o si el driver se protege. Si sucede, corta potencia y revisa la corriente configurada, alimentación, cableado y carga antes de repetir.
+5. Prueba el paro con un movimiento suficientemente largo para que puedas pulsarlo mientras se mueve. El firmware usa una desaceleración, así que el brazo puede continuar moviéndose un poco después del comando.
+   {"cmd":"MOVE","id":10,"axes":[0,10,0,0,0],"feed":50}
+   {"cmd":"STOP","id":11}
+   Asegúrate de que ese ángulo esté dentro del rango mecánico seguro de tu brazo.
+6. Prueba HOME solo cuando el brazo esté detenido y colocado en una pose que quieras tomar como cero lógico:
+   {"cmd":"HOME","id":12}
+   No busca una posición física; asigna cero a la pose actual.
+### 3. Pruebas de la interfaz
+1. Conexión y estado: conecta la interfaz y comprueba que muestra los cinco ejes y recibe posiciones.
+2. Jogs articulares: mueve cada eje con incrementos pequeños; confirma sentido y que el gemelo digital se actualiza.
+3. STOP: inicia un movimiento y activa el botón; confirma que deja de avanzar tras desacelerar.
+4. Gripper: prueba abrir y cerrar con el brazo despejado. Comprueba que el servo tiene alimentación adecuada y referencia común con el ESP32 si así lo requiere tu montaje.
+5. Cinemática directa e inversa: primero calcula una pose cercana a la actual; prueba movimientos pequeños y compara la respuesta visual y física.
+6. Teach pendant: guarda una pose corta, muévete a otra y reproduce la guardada a baja velocidad. Después prueba una secuencia de dos puntos.
+7. Límites: verifica que la interfaz y el firmware rechacen objetivos fuera de rango. En el firmware actual los límites son distintos por eje; comprueba que la interfaz no permita valores que el ESP32 vaya a rechazar y que ninguno de los rangos exceda los topes físicos.
+8. Reconexión: detén el brazo, desconecta y reconecta la interfaz, y solicita STATUS. Recuerda que apagar el ESP32 borra la referencia de posición estimada: vuelve a colocar el brazo en una pose conocida antes de continuar.
+
+## Tabla de fallos
+| Área | Falla probable / síntoma | Causa posible | Solución probable |
+|---|---|---|---|
+| **Hardware** | El ESP32 se reinicia al mover motores | Caída de tensión, fuente insuficiente o ruido eléctrico | Verificar que la fuente soporte la corriente de los motores; separar la alimentación lógica y la de potencia según el diseño; revisar conexiones y tierras. |
+| **Hardware** | Un motor no se mueve o pierde fuerza | Fuente desconectada, driver deshabilitado o corriente mal configurada | Comprobar alimentación del TB6600, estado de ENABLE, cableado y ajuste de corriente conforme al motor y al módulo. |
+| **Hardware** | Motores o drivers se calientan demasiado | Corriente excesiva, ventilación insuficiente o carga elevada | Apagar y dejar enfriar; revisar la corriente configurada, disipación y carga mecánica. |
+| **Electrónica** | El motor vibra, zumba o se mueve a tirones | Fases del motor conectadas incorrectamente, señal STEP/DIR deficiente o corriente inadecuada | Identificar correctamente los pares de bobinas; revisar señales, cableado y configuración del driver. |
+| **Electrónica** | El movimiento es errático o el ESP32 pierde comunicación | Ruido electromagnético, cables largos o tierras mal conectadas | Separar cables de potencia y señal, reducir recorridos de cable, asegurar conexiones y aplicar el esquema de puesta a tierra recomendado para el montaje. |
+| **Electrónica** | El driver no responde a las señales del ESP32 | Entradas del módulo incompatibles con la señal de 3.3 V, cableado incorrecto o ENABLE activo/inactivo al revés | Consultar el manual del módulo; verificar STEP, DIR, ENABLE y referencia eléctrica; usar una interfaz de nivel si el módulo la requiere. |
+| **Electrónica** | El motor gira en sentido opuesto | DIR invertido o sentido configurado al revés en firmware | Cambiar la configuración de sentido de ese eje o corregir el cableado según el diseño. Probar primero con recorrido pequeño. |
+| **Software** | La interfaz conecta, pero no hay movimiento | JSON mal formado, comando no reconocido, ejes incorrectos o driver deshabilitado | Revisar la respuesta `error` del ESP32; enviar `STATUS`; confirmar que `MOVE` incluya cinco ángulos y un `feed` válido. |
+| **Software** | El ESP32 rechaza un movimiento | Objetivo fuera de límites o velocidad fuera del rango permitido | Revisar los límites del eje en firmware y HMI; enviar objetivos dentro del recorrido permitido y reducir `feed`. |
+| **Software** | El brazo se mueve más o menos de lo esperado | Relación de transmisión o microstepping mal configurados | Comparar `microsteps` del firmware con los DIP del TB6600 y verificar la reducción motor/articulación de cada eje. |
+| **Software** | La posición mostrada no coincide con la posición física | El firmware estima la posición a partir de los pasos; puede haber pasos perdidos o movimiento manual con el equipo apagado | Recolocar el brazo en una pose conocida y volver a establecer el cero lógico. Para conocer posición real se requieren encoders o sensores de referencia. |
+| **Software** | El botón HOME no lleva el brazo a una pose fija | HOME solo asigna cero de software en la pose actual | Colocar manualmente el brazo en una pose de referencia antes de pulsarlo. Para homing automático, instalar finales de carrera o sensores de referencia y programar su búsqueda. |
+| **Software** | STOP tarda en detener el brazo | STOP solicita desaceleración; no corta físicamente la potencia | Considerar la distancia de frenado al probar. Para una parada de emergencia real, instalar un circuito físico que interrumpa la energía de los motores de forma segura. |
+| **Mecánica** | El brazo se atasca o no puede sostener una articulación | Interferencia, carga excesiva, fricción o par insuficiente | Apagar la potencia; revisar topes, alineación, rodamientos, tornillería y carga; probar el eje descargado antes de volver a montar la carga. |
+| **Mecánica** | Hay holgura o el eje no repite la posición | Correas flojas, acoplamientos sueltos, engranajes desgastados o juego en piezas impresas | Revisar tensión de correas y fijaciones; comprobar desgaste, grietas y holguras; repetir la calibración tras cualquier ajuste. |
+| **Mecánica** | El brazo golpea el bastidor o llega al tope | Límites de software incorrectos o cero lógico mal establecido | Detener y revisar el cero y los límites de cada articulación; establecer límites conservadores dentro del recorrido mecánico real. |
+| **Mecánica** | El gripper no abre/cierra correctamente | Servo trabado, recorrido excesivo, alimentación insuficiente o mecanismo con fricción | Revisar el mecanismo y la fuente del servo; ajustar el recorrido angular gradualmente para que no fuerce los topes. |
+
+
