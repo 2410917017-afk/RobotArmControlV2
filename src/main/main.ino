@@ -22,11 +22,11 @@ namespace {
   constexpr uint8_t kQueueLength = 8;
   constexpr uint8_t kTxQueueLength = 16;
   constexpr size_t kOutputCapacity = 768;
-  constexpr uint16_t kDefaultFeed = 200;       // pasos/s del eje con mayor recorrido
-  constexpr uint16_t kMaximumFeed = 800;       // pasos/s
-  constexpr uint32_t kBaseAcceleration = 200;  // pasos/s^2 del eje con mayor recorrido
+  constexpr uint16_t kDefaultFeed = 1000;       // pasos/s del eje con mayor recorrido
+  constexpr uint16_t kMaximumFeed = 2000;       // pasos/s
+  constexpr uint32_t kBaseAcceleration = 600;  // pasos/s^2 del eje con mayor recorrido
   constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
-  constexpr uint32_t kPositionReportPeriodMs = 200;
+  constexpr uint32_t kPositionReportPeriodMs = 500;
 
   // STEP y DIR están separados por eje.
   constexpr uint8_t kStepPins[kAxisCount] = {26, 17, 21, 23, 33}; // Cambiar 12 y 14
@@ -51,11 +51,11 @@ namespace {
 
   // Reducciones de la tabla para las cinco articulaciones.
   AxisCalibration kAxis[kAxisCount] = {
-      {200, 1, 3.5f, 1, -160.0f, 160.0f},
-      {200, 1, 83.3f, 1, 0.0f, 210.0f},
-      {200, 1, 86.6f, 1, 0.0f, 160.0f},
-      {200, 1, 4.75f, 1, -166.0f, 166.0f},
-      {200, 1, 3.0f, 1, -180.0f, 180.0f},
+    {200, 1, 3.5f, 1, -360.0f, 360.0f},
+    {200, 1, 83.3f, 1, -360.0f, 360.0f},
+    {200, 1, 86.6f, -1, -360.0f, 360.0f},
+    {200, 1, 4.75f, 1, -360.0f, 360.0f},
+    {200, 1, 3.0f, 1, -360.0f, 360.0f},
   };
 
   enum CommandType : uint8_t {

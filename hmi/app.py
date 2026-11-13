@@ -104,6 +104,11 @@ class RobotHMI(QMainWindow):
         self.connect_button.clicked.connect(self._toggle_connection)
         self.connection_label = QLabel("Desconectado")
         self.connection_label.setMinimumWidth(130)
+
+        self.goHome_button = QPushButton("Go Home")
+        self.goHome_button.setToolTip("Mover el brazo a Home")
+        self.goHome_button.clicked.connect(self._go_home)
+
         self.home_button = QPushButton("HOME · pose actual")
         self.home_button.setObjectName("homeButton")
         self.home_button.setToolTip("Asigna cero de software a la pose actual; no mueve el brazo")
@@ -118,6 +123,7 @@ class RobotHMI(QMainWindow):
         toolbar.addWidget(self.connection_label)
         toolbar.addStretch(1)
         toolbar.addWidget(self.home_button)
+        toolbar.addWidget(self.goHome_button)
         toolbar.addWidget(self.stop_button)
         root_layout.addLayout(toolbar, 0, 0)
 
@@ -395,6 +401,13 @@ class RobotHMI(QMainWindow):
     def _send_status(self) -> None:
         if self.worker is not None and self.worker.isRunning():
             self._send_command({"cmd": "STATUS"})
+
+    def _go_home(self) -> None:
+        self._send_command({
+            "cmd": "MOVE",
+            "axes": [0, 0, 0, 0, 0],
+            "feed": self.feed_spin.value(),
+        })
 
     def _send_home(self) -> None:
         self._send_command({"cmd": "HOME"})
