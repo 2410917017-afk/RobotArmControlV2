@@ -1,7 +1,6 @@
 """Modelo DH del brazo y ajustes aún por calibrar.
 
 Se usa DH estándar en milímetros: Rz(theta) Tz(d) Tx(a) Rx(alpha).
-El TCP, los offsets mecánicos y los límites siguen siendo provisionales.
 """
 
 from dataclasses import dataclass

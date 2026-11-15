@@ -30,11 +30,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from serial.tools import list_ports
 
-from utils.digital_twin import DigitalTwin
-from utils.kinematics import forward, inverse
-from utils.robot_config import (
+from robot_config import (
     DEFAULT_CARTESIAN_JOG_MM,
     DEFAULT_FEED_STEPS_S,
     DEFAULT_JOINT_JOG_DEG,
@@ -43,8 +40,12 @@ from utils.robot_config import (
     JOINT_NAMES,
     MAX_FEED_STEPS_S,
 )
-from utils.serial_worker import SerialWorker
-from utils.teach_store import load_points, save_points
+
+from serial.tools import list_ports
+from kinematics import forward, inverse
+from digital_twin import DigitalTwin
+from serial_worker import SerialWorker
+from teach_store import load_points, save_points
 
 
 class RobotHMI(QMainWindow):

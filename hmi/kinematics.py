@@ -13,7 +13,6 @@ from robot_config import (
     TCP_OFFSET_MM,
 )
 
-
 @dataclass(frozen=True)
 class Pose:
     position_mm: tuple[float, float, float]
