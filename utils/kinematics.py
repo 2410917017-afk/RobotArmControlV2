@@ -183,3 +183,97 @@ def inverse(
 
     _, position_error, orientation_error = residual(q)
     return IKResult(False, tuple(q), position_error, orientation_error, max_iterations)
+
+
+def circular_path(
+    start_joints_deg: Sequence[float],
+    center_mm: Sequence[float],
+    normal: Sequence[float],
+    sweep_deg: float,
+    samples: int,
+    *,
+    yaw_deg: float | None = None,
+    pitch_deg: float | None = None,
+    ) -> tuple[IKResult, ...]:
+    
+    """Calcula puntos IK sobre un arco circular desde la pose articular inicial.
+
+    ``center_mm`` y ``normal`` definen el plano/círculo. El punto inicial se
+    obtiene con ``forward(start_joints_deg)`` y debe estar en ese plano. El
+    barrido es firmado: positivo sigue la regla de la mano derecha respecto a
+    ``normal``; negativo recorre el arco en sentido contrario. ``samples`` es
+    el número de puntos objetivo, sin contar la pose inicial y contando el
+    extremo final. La orientación de herramienta se mantiene fija en yaw/pitch
+    de la pose inicial, salvo que se proporcionen ambos argumentos.
+
+    Resuelve la trayectoria completa antes de devolverla para que el llamador
+    pueda evitar enviar una secuencia parcial al robot si algún punto no es
+    alcanzable. Los IKResults se entregan en orden desde el primer punto hasta
+    el final; cada solución se usa como semilla de la siguiente.
+    """
+    
+    if len(start_joints_deg) != len(DH_LINKS):
+        raise ValueError("Se requieren cinco ángulos articulares iniciales")
+    if len(center_mm) != 3 or len(normal) != 3:
+        raise ValueError("El centro y la normal deben tener tres componentes")
+    if not isinstance(samples, int) or samples < 1:
+        raise ValueError("samples debe ser un entero mayor o igual que 1")
+    if not math.isfinite(float(sweep_deg)) or abs(float(sweep_deg)) < 1e-9:
+        raise ValueError("sweep_deg debe ser finito y distinto de cero")
+    values = [float(v) for v in (*start_joints_deg, *center_mm, *normal)]
+    if not all(math.isfinite(v) for v in values):
+        raise ValueError("La trayectoria contiene valores no finitos")
+    if (yaw_deg is None) != (pitch_deg is None):
+        raise ValueError("Proporciona yaw_deg y pitch_deg juntos, o ninguno")
+
+    start_pose = forward(start_joints_deg)
+    center = tuple(float(v) for v in center_mm)
+    n = tuple(float(v) for v in normal)
+    n_length = math.sqrt(sum(v * v for v in n))
+    if n_length <= 1e-12:
+        raise ValueError("La normal del plano no puede ser cero")
+    n = tuple(v / n_length for v in n)
+
+    radius = tuple(start_pose.position_mm[i] - center[i] for i in range(3))
+    radius_length = math.sqrt(sum(v * v for v in radius))
+    if radius_length <= 1e-9:
+        raise ValueError("El punto inicial coincide con el centro del círculo")
+    plane_error = abs(sum(radius[i] * n[i] for i in range(3)))
+    if plane_error > max(1.0, radius_length * 1e-3):
+        raise ValueError("El punto inicial no pertenece al plano definido por center_mm y normal")
+
+    yaw = start_pose.yaw_deg if yaw_deg is None else float(yaw_deg)
+    pitch = start_pose.pitch_deg if pitch_deg is None else float(pitch_deg)
+    if not math.isfinite(yaw) or not math.isfinite(pitch):
+        raise ValueError("La orientación objetivo debe ser finita")
+
+    results: list[IKResult] = []
+    seed = tuple(float(v) for v in start_joints_deg)
+    sweep = math.radians(float(sweep_deg))
+    for index in range(1, samples + 1):
+        angle = sweep * index / samples
+        cosine, sine = math.cos(angle), math.sin(angle)
+        cross = (
+            n[1] * radius[2] - n[2] * radius[1],
+            n[2] * radius[0] - n[0] * radius[2],
+            n[0] * radius[1] - n[1] * radius[0],
+        )
+        projection = sum(n[i] * radius[i] for i in range(3))
+        rotated = tuple(
+            radius[i] * cosine + cross[i] * sine + n[i] * projection * (1.0 - cosine)
+            for i in range(3)
+        )
+        target = tuple(center[i] + rotated[i] for i in range(3))
+        result = inverse(target, yaw, pitch, seed)
+        if not result.success:
+            raise ValueError(
+                f"El punto {index}/{samples} del arco no converge: "
+                f"error XYZ={result.position_error_mm:.2f} mm, "
+                f"orientación={result.orientation_error_deg:.2f}°"
+            )
+        results.append(result)
+        seed = result.joints_deg
+
+    return tuple(results)
+
+

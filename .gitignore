@@ -6,3 +6,4 @@ hmi/.venv/
 .venv/
 .vscode/
 hmi/_pycache_/
+notas.txt

@@ -32,9 +32,9 @@ from PyQt6.QtWidgets import (
 )
 from serial.tools import list_ports
 
-from digital_twin import DigitalTwin
-from kinematics import forward, inverse
-from robot_config import (
+from utils.digital_twin import DigitalTwin
+from utils.kinematics import forward, inverse
+from utils.robot_config import (
     DEFAULT_CARTESIAN_JOG_MM,
     DEFAULT_FEED_STEPS_S,
     DEFAULT_JOINT_JOG_DEG,
@@ -43,8 +43,8 @@ from robot_config import (
     JOINT_NAMES,
     MAX_FEED_STEPS_S,
 )
-from serial_worker import SerialWorker
-from teach_store import load_points, save_points
+from utils.serial_worker import SerialWorker
+from utils.teach_store import load_points, save_points
 
 
 class RobotHMI(QMainWindow):
@@ -137,12 +137,12 @@ class RobotHMI(QMainWindow):
         self.log.setColumnWidth(0, 50)
         self.log.setMaximumWidth(300)
         self.log.setHorizontalHeaderLabels(["Hora", "Evento / diagnóstico"])
-        self.log.horizontalHeader().setStretchLastSection(True)
+        self.log.horizontalHeader().setStretchLastSection(True) # type: ignore
         self.log.setStyleSheet("""color:black; background:white""")
         #self.log.setMaximumHeight(105)
         self.log.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         root_layout.addWidget(self.log, 0, 1, 2, 1)
-        self.statusBar().showMessage("HOME del ESP32 es una referencia de software en la pose actual.")
+        self.statusBar().showMessage("HOME del ESP32 es una referencia de software en la pose actual.") # type: ignore
 
     def _build_manual_tab(self) -> None:
         page = QWidget()
@@ -269,7 +269,7 @@ class RobotHMI(QMainWindow):
         self.points_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.points_table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
         self.points_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.points_table.horizontalHeader().setStretchLastSection(True)
+        self.points_table.horizontalHeader().setStretchLastSection(True) # type: ignore
         layout.addWidget(self.points_table, 1)
 
         actions = QHBoxLayout()

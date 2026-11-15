@@ -30,7 +30,7 @@ class DigitalTwin(QWidget):
         iso_y = (x + y) * 0.32 + z
         return center_x + iso_x * scale, center_y - iso_y * scale
 
-    def paintEvent(self, _event) -> None:  # noqa: N802 - Qt event naming
+    def paintEvent(self, _event) -> None:  # type: ignore # noqa: N802 - Qt event naming
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor("#101820"))
