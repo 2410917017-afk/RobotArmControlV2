@@ -8,11 +8,11 @@ Firmware Arduino/PlatformIO para cinco motores paso a paso con TB6600. La interf
 ### Parametros DH
 |i|θ|d|a|α|
 |:-:|:-----:|:-:|:-:|:----:|
-|1|0|145|25|90|
+|1|0|145.6|25|90|
 |2|90|0|200|0|
 |3|0|0|0|90|
 |4|0|177|0|-90|
-|5|0|0|0|90|
+|5|0|0|48|90|
 
 ### Relaciones de transmición mecánica
 |Junta|Planetario|Polea|Combinados|Pasos por grado|
