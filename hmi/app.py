@@ -33,12 +33,11 @@ from PyQt6.QtWidgets import (
 
 from robot_config import (
     DEFAULT_CARTESIAN_JOG_MM,
-    DEFAULT_FEED_STEPS_S,
+    DEFAULT_FEED_DEG_S,
     DEFAULT_JOINT_JOG_DEG,
-    DEFAULT_ANGULAR_JOG_DEG,
     JOINT_LIMITS_DEG,
     JOINT_NAMES,
-    MAX_FEED_STEPS_S,
+    MAX_FEED_DEG_S,
 )
 
 from serial.tools import list_ports
@@ -86,6 +85,7 @@ class RobotHMI(QMainWindow):
             QPushButton { min-height: 25px; padding: 4px 10px; border-radius: 5px; background: #ff3509; }
             QPushButton:hover { background: #c6d8e5; }
             QPushButton:disabled { color: #89949e; background: #e2e6e9; }
+            QPushButton#gripperButton { min-height: 15px }
             QPushButton#stopButton { background: #b71c1c; color: white; font-weight: bold; }
             QPushButton#homeButton { background: #546e7a; color: white; font-weight: bold; }
             QHeaderView::section { padding: 5px; background: #dce5eb; border: 0; }
@@ -146,7 +146,7 @@ class RobotHMI(QMainWindow):
         self.log.horizontalHeader().setStretchLastSection(True) # type: ignore
         self.log.setStyleSheet("""color:black; background:white""")
         self.log.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        root_layout.addWidget(self.log, 2, 0)
+        root_layout.addWidget(self.log, 2, 0, 2, 1)
         
         self.statusBar().showMessage("HOME del ESP32 es una referencia de software en la pose actual.") # type: ignore
 
@@ -167,10 +167,13 @@ class RobotHMI(QMainWindow):
         self.joint_step.setDecimals(1)
         self.joint_step.setSingleStep(0.5)
         self.joint_step.setValue(DEFAULT_JOINT_JOG_DEG)
-        self.feed_spin = QSpinBox()
-        self.feed_spin.setRange(1, MAX_FEED_STEPS_S)
-        self.feed_spin.setValue(DEFAULT_FEED_STEPS_S)
-        self.feed_spin.setSuffix(" pasos/s")
+        self.joint_step.setSuffix(" °")
+        self.feed_spin = QDoubleSpinBox()
+        self.feed_spin.setRange(0.1, MAX_FEED_DEG_S)
+        self.feed_spin.setDecimals(1)
+        self.feed_spin.setSingleStep(0.2)
+        self.feed_spin.setValue(DEFAULT_FEED_DEG_S)
+        self.feed_spin.setSuffix(" °/s")
         joint_layout.addWidget(QLabel("Incremento"), 7, 0)
         joint_layout.addWidget(self.joint_step, 7, 1)
         joint_layout.addWidget(QLabel("Feed"), 8, 0)
@@ -251,9 +254,9 @@ class RobotHMI(QMainWindow):
         fk_layout.addRow("Estado", self.reference_label)
 
         gripper_group = QGroupBox("Gripper servo")
-        gripper_group.setMaximumHeight(70)
         gripper_layout = QHBoxLayout(gripper_group)
         self.gripper_button = QPushButton("Abrir gripper")
+        self.gripper_button.setObjectName("gripperButton")
         self.gripper_button.clicked.connect(self._toggle_gripper)
         self.gripper_state_label = QLabel("Estado desconocido")
         gripper_layout.addWidget(self.gripper_button)
@@ -272,10 +275,10 @@ class RobotHMI(QMainWindow):
         right.addWidget(cart_group, 0, 0)
 
 
-        fright = QVBoxLayout()
+        fright = QGridLayout()
         left.addWidget(gripper_group)
-        fright.addWidget(fk_group)
-        fright.addWidget(self.twin)
+        fright.addWidget(fk_group, 0, 0)
+        fright.addWidget(self.twin, 1, 0, 2, 0)
         
         layout.addLayout(right, 0, 1)
         layout.addLayout(fright, 0, 2)
@@ -430,7 +433,7 @@ class RobotHMI(QMainWindow):
     def _go_rest(self) -> None:
             self._send_command({
                 "cmd": "MOVE",
-                "axes": [0, -120, -120, 0, -20],
+                "axes": [0, -110, -110, 0, -15],
                 "feed": self.feed_spin.value(),
             })
 

@@ -12,7 +12,7 @@ from kinematics import forward
 class DigitalTwin(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setMinimumSize(320, 260)
+        self.setMaximumSize(450, 500)
         self.joints_deg = [0.0] * 5
         self.teach_points: list[tuple[str, list[float]]] = []
         self.model_valid = False

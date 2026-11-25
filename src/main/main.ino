@@ -22,9 +22,9 @@ namespace {
   constexpr uint8_t kQueueLength = 8;
   constexpr uint8_t kTxQueueLength = 16;
   constexpr size_t kOutputCapacity = 768;
-  constexpr uint16_t kDefaultFeed = 1000;       // pasos/s del eje con mayor recorrido
-  constexpr uint16_t kMaximumFeed = 2000;       // pasos/s
-  constexpr uint32_t kBaseAcceleration = 600;  // pasos/s^2 del eje con mayor recorrido
+  constexpr float kDefaultFeed = 1.0f;       // pasos/s del eje con mayor recorrido
+  constexpr float kMaximumFeed = 20.0f;       // pasos/s
+  constexpr float kBaseAcceleration = 2.0f;  // pasos/s^2 del eje con mayor recorrido
   constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
   constexpr uint32_t kPositionReportPeriodMs = 500;
 
@@ -70,7 +70,7 @@ namespace {
     uint32_t id;
     CommandType type;
     long targetSteps[kAxisCount];
-    uint16_t feed;
+    float feed;
     bool toolOpen;
   };
 
@@ -94,6 +94,12 @@ namespace {
     return static_cast<float>(c.fullStepsPerMotorRevolution) * c.microsteps *
           c.motorRevolutionsPerJointRevolution / 360.0f;
   }
+
+
+  float speed_pulses(uint8_t axis){
+
+  }
+
 
   long jointDegreesToSteps(uint8_t axis, float degrees) {
     const float steps = degrees * stepsPerJointDegree(axis) * kAxis[axis].directionSign;
@@ -209,17 +215,17 @@ namespace {
         return;
       }
 
-      if (document.containsKey("feed") && !document["feed"].is<float>() &&
+      if (document.containsKey("feed") && !document["feed"].is<uint16_t>() &&
           !document["feed"].is<int>() && !document["feed"].is<unsigned int>()) {
         sendError(commandName, "feed_must_be_numeric", id);
         return;
       }
       const float feed = document["feed"] | static_cast<float>(kDefaultFeed);
-      if (!isfinite(feed) || feed < 1.0f || feed > kMaximumFeed) {
+      if (!isfinite(feed) || feed <= 0.0f || feed > kMaximumFeed) {
         sendError(commandName, "feed_out_of_range", id);
         return;
       }
-      command.feed = static_cast<uint16_t>(feed);
+      command.feed = static_cast<float>(feed);
 
       for (uint8_t i = 0; i < kAxisCount; ++i) {
         const JsonVariantConst value = axes[i];
@@ -337,26 +343,36 @@ namespace {
   }
 
   void applyMove(const MotionCommand& command) {
-    int32_t largestDistance = 0;
+    float largestDistance = 0.0f;
     int32_t targets[kAxisCount];
-    int32_t distances[kAxisCount];
+    float distances[kAxisCount];
     for (uint8_t i = 0; i < kAxisCount; ++i) {
       targets[i] = static_cast<int32_t>(command.targetSteps[i]);
-      distances[i] = abs(targets[i] - steppers[i]->getCurrentPosition());
+
+      const int32_t current = steppers[i]->getCurrentPosition();
+
+      distances[i] = fabsf(stepsToJointDegrees(i, targets[i])-stepsToJointDegrees(i, current));
+
       if (distances[i] > largestDistance) largestDistance = distances[i];
     }
 
     setDriversEnabled(true);
     activeCommandId = command.id;
     activeMoveCommandId = command.id;
+
     for (uint8_t i = 0; i < kAxisCount; ++i) {
-      const float fraction = largestDistance == 0
-                                ? 1.0f
-                                : static_cast<float>(distances[i]) / largestDistance;
-      uint32_t axisSpeed = static_cast<uint32_t>(command.feed * fraction);
-      int32_t axisAcceleration = static_cast<int32_t>(kBaseAcceleration * fraction);
+      const float fraction = largestDistance > 0.0f
+                                ? static_cast<float>(distances[i]) / largestDistance : 0.0f;
+
+      const float stepsPerDeg = stepsPerJointDegree(i);
+
+      uint32_t axisSpeed = static_cast<uint32_t>(lroundf(command.feed * fraction * stepsPerDeg));
+      
+      int32_t axisAcceleration = static_cast<int32_t>(lroundf(kBaseAcceleration * fraction * stepsPerDeg));
+      
       if (axisSpeed < 1) axisSpeed = 1;
       if (axisAcceleration < 1) axisAcceleration = 1;
+
       if (steppers[i]->setSpeedInHz(axisSpeed) != 0 ||
           steppers[i]->setAcceleration(axisAcceleration) != 0) {
         sendError("MOVE", "stepper_speed_or_acceleration_rejected", command.id);
@@ -372,7 +388,7 @@ namespace {
         return;
       }
     }
-    sendPosition(largestDistance == 0 ? "complete" : "position");
+    sendPosition(largestDistance == 0.0f ? "complete" : "position");
   }
 
   void motionTask(void*) {
@@ -449,8 +465,13 @@ void setup() {
       for (;;) delay(1000);
     }
     steppers[i]->setDirectionPin(kDirectionPins[i]);
-    if (steppers[i]->setSpeedInHz(kDefaultFeed) != 0 ||
-        steppers[i]->setAcceleration(kBaseAcceleration) != 0) {
+
+    const uint32_t initialSpeed = static_cast<uint32_t>(ceilf(kDefaultFeed * stepsPerJointDegree(i)));
+
+    const uint32_t initialAcceleration = static_cast<uint32_t>(ceilf(kBaseAcceleration * stepsPerJointDegree(i)));
+
+    if (steppers[i]->setSpeedInHz(initialSpeed) != 0 ||
+        steppers[i]->setAcceleration(initialAcceleration) != 0) {
       Serial.printf("{\"event\":\"error\",\"code\":\"stepper_engine_configuration_failed\",\"axis\":%u}\n",
                     static_cast<unsigned>(i + 1));
       for (;;) delay(1000);

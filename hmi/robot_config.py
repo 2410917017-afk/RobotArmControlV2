@@ -20,11 +20,11 @@ JOINT_LIMITS_DEG = ((-360, 360),(-360, 360),(-280, 280),(-280, 280),(-160, 160))
 
 # En DH estándar, theta es la variable articular y a corresponde a r.
 DH_LINKS = (
-    DHLink(a_mm=25.0, d_mm=145.0, alpha_deg=90.0),
+    DHLink(a_mm=25.0, d_mm=145.6, alpha_deg=90.0),
     DHLink(a_mm=200.0, d_mm=0.0, alpha_deg=0.0),
     DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
     DHLink(a_mm=0.0, d_mm=177.0, alpha_deg=-90.0),
-    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
+    DHLink(a_mm=0.0, d_mm=48.0, alpha_deg=90.0),
 )
 
 # Offset mecánico entre el cero lógico de arranque del ESP32 y DH theta=0.
@@ -32,8 +32,7 @@ DH_LINKS = (
 KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 90.0, 0.0, 0.0, 0.0)
 TCP_OFFSET_MM = (0.0, 0.0, 0.0)
 
-DEFAULT_FEED_STEPS_S = 1000
-MAX_FEED_STEPS_S = 2000
+DEFAULT_FEED_DEG_S = 1.0
+MAX_FEED_DEG_S = 20.0
 DEFAULT_JOINT_JOG_DEG = 1.0
 DEFAULT_CARTESIAN_JOG_MM = 5.0
-DEFAULT_ANGULAR_JOG_DEG = 2.0
