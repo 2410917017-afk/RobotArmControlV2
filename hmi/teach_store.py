@@ -7,7 +7,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from hmi.robot_config import JOINT_LIMITS_DEG
+from robot_config import JOINT_LIMITS_DEG
 
 
 def save_points(path: str | Path, points: list[dict[str, Any]]) -> None:
