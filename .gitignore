@@ -1,0 +1,11 @@
+.pio/
+.pio-core/
+__pycache__/
+*.py[cod]
+hmi/.venv/
+.venv/
+.vscode/
+hmi/_pycache_/
+notas.txt
+XboxController/
+firmware_robodk/
