@@ -216,10 +216,11 @@ namespace {
       }
 
       if (document.containsKey("feed") && !document["feed"].is<uint16_t>() &&
-          !document["feed"].is<int>() && !document["feed"].is<unsigned int>()) {
+          !document["feed"].is<int>() && !document["feed"].is<unsigned int>() && !document["feed"].is<float>()) {
         sendError(commandName, "feed_must_be_numeric", id);
         return;
       }
+
       const float feed = document["feed"] | static_cast<float>(kDefaultFeed);
       if (!isfinite(feed) || feed <= 0.0f || feed > kMaximumFeed) {
         sendError(commandName, "feed_out_of_range", id);
