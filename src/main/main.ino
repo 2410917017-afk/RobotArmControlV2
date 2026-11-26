@@ -23,7 +23,7 @@ namespace {
   constexpr uint8_t kTxQueueLength = 16;
   constexpr size_t kOutputCapacity = 768;
   constexpr uint16_t kDefaultFeed = 1000;       // pasos/s del eje con mayor recorrido
-  constexpr uint16_t kMaximumFeed = 2000;       // pasos/s
+  constexpr uint16_t kMaximumFeed = 5000;       // pasos/s
   constexpr uint32_t kBaseAcceleration = 600;  // pasos/s^2 del eje con mayor recorrido
   constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
   constexpr uint32_t kPositionReportPeriodMs = 500;
