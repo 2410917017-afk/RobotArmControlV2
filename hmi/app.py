@@ -138,7 +138,6 @@ class RobotHMI(QMainWindow):
         root_layout.addWidget(self.tabs, 1, 0)
         self._build_manual_tab()
         self._build_teach_tab()
-        #self._build_twin_tab()
 
         self.log = QTableWidget(0, 2)
         self.log.setColumnWidth(0, 50)
@@ -267,19 +266,16 @@ class RobotHMI(QMainWindow):
 
         left.addWidget(joint_group)
 
-        left.addStretch(1)
         layout.addLayout(left, 0, 0)
         right = QGridLayout()
 
         right.addWidget(cart_group, 0, 0)
-
 
         fright = QVBoxLayout()
         left.addWidget(gripper_group)
         fright.addWidget(fk_group)
         fright.addWidget(self.twin)
         
-        #right.addStretch(1)
         layout.addLayout(right, 0, 1)
         layout.addLayout(fright, 0, 2)
 
@@ -339,16 +335,6 @@ class RobotHMI(QMainWindow):
         layout.addLayout(run_row)
         self.tabs.addTab(page, "Teach pendant")
 
-    #def _build_twin_tab(self) -> None:
-    #    page = QWidget()
-    #    layout = QVBoxLayout(page)
-    #    self.twin = DigitalTwin()
-    #    layout.addWidget(self.twin, 1)
-    #    note = QLabel("Visualización ligera con el DH estándar confirmado; TCP y offsets aún están por calibrar. Las marcas amarillas son puntos teach guardados.")
-    #    note.setWordWrap(True)
-    #    layout.addWidget(note)
-    #    self.tabs.addTab(page, "Gemelo digital")
-    #    self._refresh_twin()
 
     def _refresh_ports(self) -> None:
         selected = self.port_combo.currentData() if hasattr(self, "port_combo") else None
