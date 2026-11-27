@@ -22,9 +22,9 @@ namespace {
   constexpr uint8_t kQueueLength = 8;
   constexpr uint8_t kTxQueueLength = 16;
   constexpr size_t kOutputCapacity = 768;
-  constexpr float kDefaultFeed = 1.0f;       // pasos/s del eje con mayor recorrido
-  constexpr float kMaximumFeed = 20.0f;       // pasos/s
-  constexpr float kBaseAcceleration = 2.0f;  // pasos/s^2 del eje con mayor recorrido
+  constexpr float kDefaultFeed = 300.0f;       // pasos/s del eje con mayor recorrido
+  constexpr float kMaximumFeed = 600.0f;       // pasos/s
+  constexpr float kBaseAcceleration = 50.0f;  // pasos/s^2 del eje con mayor recorrido
   constexpr TickType_t kMotionPeriod = pdMS_TO_TICKS(5) > 0 ? pdMS_TO_TICKS(5) : 1;
   constexpr uint32_t kPositionReportPeriodMs = 500;
 
@@ -37,7 +37,7 @@ namespace {
 
   // Pin y recorrido: cerrado=0°, abierto=55°.
   constexpr int8_t kToolPin = 13;
-  constexpr uint8_t kToolOpenAngle = 55;
+  constexpr uint8_t kToolOpenAngle = 45;
   constexpr uint8_t kToolClosedAngle = 0;
 
   struct AxisCalibration {
@@ -51,11 +51,11 @@ namespace {
 
   // Reducciones de la tabla para las cinco articulaciones.
   AxisCalibration kAxis[kAxisCount] = {
-    {200, 1, 3.5f, 1, -360.0f, 360.0f},
-    {200, 1, 83.3f, 1, -360.0f, 360.0f},
-    {200, 1, 86.6f, -1, -360.0f, 360.0f},
-    {200, 1, 4.75f, 1, -360.0f, 360.0f},
-    {200, 1, 3.0f, 1, -360.0f, 360.0f},
+    {200, 1, 3.5f, 1, -160.0f, 160.0f},
+    {200, 1, 83.3f, 1, -140.0f, 220.0f},
+    {200, 1, 86.6f, 1, -130.0f, 360.0f},
+    {200, 1, 4.75f, 1, -180.0f, 180.0f},
+    {200, 1, 3.0f, -1, -110.0f, 100.0f},
   };
 
   enum CommandType : uint8_t {

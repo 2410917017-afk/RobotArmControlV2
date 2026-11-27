@@ -15,7 +15,7 @@ class DHLink:
 
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5")
-JOINT_LIMITS_DEG = ((-360, 360),(-360, 360),(-280, 280),(-280, 280),(-160, 160))
+JOINT_LIMITS_DEG = ((-160, 160),(-140, 220),(-130, 360),(-180, 180),(-100, 100))
 
 
 # En DH estándar, theta es la variable articular y a corresponde a r.
@@ -32,7 +32,7 @@ DH_LINKS = (
 KINEMATIC_ZERO_OFFSETS_DEG = (0.0, 90.0, 0.0, 0.0, 0.0)
 TCP_OFFSET_MM = (0.0, 0.0, 0.0)
 
-DEFAULT_FEED_DEG_S = 1.0
-MAX_FEED_DEG_S = 20.0
+DEFAULT_FEED_DEG_S = 100.0
+MAX_FEED_DEG_S = 600.0
 DEFAULT_JOINT_JOG_DEG = 1.0
 DEFAULT_CARTESIAN_JOG_MM = 5.0
