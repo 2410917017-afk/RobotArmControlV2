@@ -23,8 +23,8 @@ DH_LINKS = (
     DHLink(a_mm=25.0, d_mm=145.6, alpha_deg=90.0),
     DHLink(a_mm=200.0, d_mm=0.0, alpha_deg=0.0),
     DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
-    DHLink(a_mm=0.0, d_mm=177.0, alpha_deg=-90.0),
-    DHLink(a_mm=0.0, d_mm=48.0, alpha_deg=90.0),
+    DHLink(a_mm=0.0, d_mm=187.0, alpha_deg=-90.0),
+    DHLink(a_mm=0.0, d_mm=0.0, alpha_deg=90.0),
 )
 
 # Offset mecánico entre el cero lógico de arranque del ESP32 y DH theta=0.
