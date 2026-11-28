@@ -429,7 +429,7 @@ class RobotHMI(QMainWindow):
     def _go_rest(self) -> None:
             self._send_command({
                 "cmd": "MOVE",
-                "axes": [0, -120, -120, 0, -20],
+                "axes": [0, -110, -110, 0, -15],
                 "feed": self.feed_spin.value(),
             })
 

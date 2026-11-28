@@ -15,7 +15,7 @@ class DHLink:
 
 
 JOINT_NAMES = ("J1", "J2", "J3", "J4", "J5")
-JOINT_LIMITS_DEG = ((-360, 360),(-360, 360),(-280, 280),(-280, 280),(-160, 160))
+JOINT_LIMITS_DEG = ((-160, 160),(-140, 220),(-130, 360),(-180, 180),(-100, 100))
 
 
 # En DH estándar, theta es la variable articular y a corresponde a r.
